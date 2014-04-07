@@ -228,6 +228,53 @@ public class GeoJSONShapeParserTests extends ElasticsearchTestCase {
     }
 
     @Test
+    public void testParse_geometryCollection() throws IOException {
+        String geometryCollectionGeoJson = XContentFactory.jsonBuilder().startObject().field("type", "GeometryCollection")
+                .startArray("geometries")
+                .startObject().field("type", "Polygon")
+                .startArray("coordinates")
+                .startArray()
+                .startArray().value(100.0).value(1.0).endArray()
+                .startArray().value(101.0).value(1.0).endArray()
+                .startArray().value(101.0).value(0.0).endArray()
+                .startArray().value(100.0).value(0.0).endArray()
+                .startArray().value(100.0).value(1.0).endArray()
+                .endArray()
+                .endArray()
+                .endObject()
+                .startObject().field("type", "LineString")
+                .startArray("coordinates")
+                .startArray().value(100.0).value(0.0).endArray()
+                .startArray().value(101.0).value(1.0).endArray()
+                .endArray()
+                .endObject()
+                .startObject().field("type", "Point")
+                .startArray("coordinates").value(100.0).value(0.0).endArray()
+                .endObject().string();
+
+        List<Coordinate> shellCoordinates = new ArrayList<>();
+        shellCoordinates.add(new Coordinate(100, 0));
+        shellCoordinates.add(new Coordinate(101, 0));
+        shellCoordinates.add(new Coordinate(101, 1));
+        shellCoordinates.add(new Coordinate(100, 1));
+        shellCoordinates.add(new Coordinate(100, 0));
+
+        LinearRing shell = GEOMETRY_FACTORY.createLinearRing(shellCoordinates.toArray(new Coordinate[shellCoordinates.size()]));
+        Polygon polygon = GEOMETRY_FACTORY.createPolygon(shell, null);
+
+        List<Coordinate> lineCoordinates = new ArrayList<>();
+        lineCoordinates.add(new Coordinate(100, 0));
+        lineCoordinates.add(new Coordinate(101, 1));
+
+        LineString linestring = GEOMETRY_FACTORY.createLineString(lineCoordinates.toArray(new Coordinate[lineCoordinates.size()]));
+
+        Point point = GEOMETRY_FACTORY.createPoint(new Coordinate(100.0, 0.0));
+        ShapeCollection expected = shapeCollection(polygon, linestring, point);
+
+        assertGeometryEquals(expected, geometryCollectionGeoJson);
+    }
+
+    @Test
     public void testThatParserExtractsCorrectTypeAndCoordinatesFromArbitraryJson() throws IOException {
         String pointGeoJson = XContentFactory.jsonBuilder().startObject()
                 .startObject("crs")
@@ -261,7 +308,10 @@ public class GeoJSONShapeParserTests extends ElasticsearchTestCase {
     private ShapeCollection<Shape> shapeCollection(Geometry... geoms) {
         List<Shape> shapes = new ArrayList<>(geoms.length);
         for (Geometry geom : geoms) {
-            shapes.add(jtsGeom(geom));
+            if(geom instanceof Point )
+                shapes.add(new JtsPoint((Point)geom, SPATIAL_CONTEXT));
+            else
+                shapes.add(jtsGeom(geom));
         }
         return new ShapeCollection<>(shapes, SPATIAL_CONTEXT);
     }

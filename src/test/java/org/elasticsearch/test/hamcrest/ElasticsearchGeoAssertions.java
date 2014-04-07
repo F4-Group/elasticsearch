@@ -54,29 +54,29 @@ public class ElasticsearchGeoAssertions {
         }
         return top;
     }
-    
+
     private static int prev(int top, Coordinate...points) {
         for (int i = 1; i < points.length; i++) {
             int p = (top + points.length - i) % points.length;
             if((points[p].x != points[top].x) || (points[p].y != points[top].y)) {
                 return p;
-            } 
+            }
         }
         return -1;
     }
-    
+
     private static int next(int top, Coordinate...points) {
         for (int i = 1; i < points.length; i++) {
             int n = (top + i) % points.length;
             if((points[n].x != points[top].x) || (points[n].y != points[top].y)) {
                 return n;
-            } 
+            }
         }
         return -1;
     }
-    
+
     private static Coordinate[] fixedOrderedRing(List<Coordinate> coordinates, boolean direction) {
-        return fixedOrderedRing(coordinates.toArray(new Coordinate[coordinates.size()]), direction); 
+        return fixedOrderedRing(coordinates.toArray(new Coordinate[coordinates.size()]), direction);
     }
 
     private static Coordinate[] fixedOrderedRing(Coordinate[] points, boolean direction) {
@@ -101,7 +101,7 @@ public class ElasticsearchGeoAssertions {
                 return points;
             }
         }
-        
+
     }
 
     public static void assertEquals(Coordinate c1, Coordinate c2) {
@@ -111,7 +111,7 @@ public class ElasticsearchGeoAssertions {
     private static boolean isRing(Coordinate[] c) {
         return (c[0].x == c[c.length-1].x) && (c[0].y == c[c.length-1].y);
     }
-    
+
     public static void assertEquals(Coordinate[] c1, Coordinate[] c2) {
         Assert.assertEquals(c1.length, c2.length);
 
@@ -219,7 +219,11 @@ public class ElasticsearchGeoAssertions {
     public static void assertMultiLineString(Shape shape) {
         assert(unwrap(shape) instanceof MultiLineString): "expected MultiLineString but found " + unwrap(shape).getClass().getName();
     }
-    
+
+    public static void assertShapeCollection(Shape shape) {
+        assert(shape instanceof ShapeCollection): "expected ShapeCollecton but found " + unwrap(shape).getClass().getName();
+    }
+
     public static void assertDistance(String geohash1, String geohash2, Matcher<Double> match) {
         GeoPoint p1 = new GeoPoint(geohash1);
         GeoPoint p2 = new GeoPoint(geohash2);
@@ -229,7 +233,7 @@ public class ElasticsearchGeoAssertions {
     public static void assertDistance(double lat1, double lon1, double lat2, double lon2, Matcher<Double> match) {
         assertThat(distance(lat1, lon1, lat2, lon2), match);
     }
-    
+
     private static double distance(double lat1, double lon1, double lat2, double lon2) {
         return GeoDistance.ARC.calculate(lat1, lon1, lat2, lon2, DistanceUnit.DEFAULT);
     }
