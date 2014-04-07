@@ -33,7 +33,7 @@ public class GeometryCollectionBuilder extends ShapeBuilder {
     public static final String FIELD_GEOMETRIES = "geometries";
     public static final GeoShapeType TYPE = GeoShapeType.GEOMETRYCOLLECTION;
 
-    protected final ArrayList<ShapeBuilder> geometries = new ArrayList<>();
+    protected final ArrayList<ShapeBuilder> geometries = new ArrayList<ShapeBuilder>();
 
     public GeometryCollectionBuilder geometry(ShapeBuilder geometry) {
         this.geometries.add(geometry);
@@ -59,10 +59,10 @@ public class GeometryCollectionBuilder extends ShapeBuilder {
 
     @Override
     public Shape build() {
-        List<Shape> shapes = new ArrayList<>(this.geometries.size());
+        List<Shape> shapes = new ArrayList<Shape>(this.geometries.size());
         for (ShapeBuilder geometry : this.geometries) {
             shapes.add(geometry.build());
         }
-        return new ShapeCollection<>(shapes, SPATIAL_CONTEXT);
+        return new ShapeCollection<Shape>(shapes, SPATIAL_CONTEXT);
     }
 }

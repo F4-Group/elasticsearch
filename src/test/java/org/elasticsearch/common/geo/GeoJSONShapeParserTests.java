@@ -252,7 +252,7 @@ public class GeoJSONShapeParserTests extends ElasticsearchTestCase {
                 .startArray("coordinates").value(100.0).value(0.0).endArray()
                 .endObject().string();
 
-        List<Coordinate> shellCoordinates = new ArrayList<>();
+        List<Coordinate> shellCoordinates = new ArrayList<Coordinate>();
         shellCoordinates.add(new Coordinate(100, 0));
         shellCoordinates.add(new Coordinate(101, 0));
         shellCoordinates.add(new Coordinate(101, 1));
@@ -262,7 +262,7 @@ public class GeoJSONShapeParserTests extends ElasticsearchTestCase {
         LinearRing shell = GEOMETRY_FACTORY.createLinearRing(shellCoordinates.toArray(new Coordinate[shellCoordinates.size()]));
         Polygon polygon = GEOMETRY_FACTORY.createPolygon(shell, null);
 
-        List<Coordinate> lineCoordinates = new ArrayList<>();
+        List<Coordinate> lineCoordinates = new ArrayList<Coordinate>();
         lineCoordinates.add(new Coordinate(100, 0));
         lineCoordinates.add(new Coordinate(101, 1));
 

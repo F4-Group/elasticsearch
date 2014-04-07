@@ -240,7 +240,7 @@ public abstract class ShapeBuilder implements ToXContent {
         }
 
         XContentParser.Token token = parser.nextToken();
-        List<ShapeBuilder> geometries = new ArrayList<>();
+        List<ShapeBuilder> geometries = new ArrayList<ShapeBuilder>();
         while (token != XContentParser.Token.END_ARRAY) {
             geometries.add(ShapeBuilder.parse(parser));
             token = parser.nextToken();
