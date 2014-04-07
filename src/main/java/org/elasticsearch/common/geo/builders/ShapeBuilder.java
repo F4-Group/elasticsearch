@@ -166,6 +166,14 @@ public abstract class ShapeBuilder implements ToXContent {
         return new EnvelopeBuilder();
     }
 
+    /**
+     * create a new Collection of geometries
+     * @return a new {@link GeometryCollectionBuilder}
+     */
+    public static GeometryCollectionBuilder newGeometryCollection() {
+        return new GeometryCollectionBuilder();
+    }
+
     @Override
     public String toString() {
         try {
@@ -214,6 +222,31 @@ public abstract class ShapeBuilder implements ToXContent {
         }
 
         return new CoordinateNode(nodes);
+    }
+
+    /**
+     * Parse the geometries array of a GeometryCollection
+     *
+     * @param parser
+     *            Parser that will be read from
+     * @return Geometry[] geometries of the GeometryCollection
+     * @throws IOException
+     *             Thrown if an error occurs while reading from the
+     *             XContentParser
+     */
+    private static List<ShapeBuilder> parseGeometries(XContentParser parser) throws IOException {
+        if (parser.currentToken() != XContentParser.Token.START_ARRAY) {
+            throw new ElasticsearchParseException("Geometries must be an array of geojson objects");
+        }
+
+        XContentParser.Token token = parser.nextToken();
+        List<ShapeBuilder> geometries = new ArrayList<>();
+        while (token != XContentParser.Token.END_ARRAY) {
+            geometries.add(ShapeBuilder.parse(parser));
+            token = parser.nextToken();
+        }
+
+        return geometries;
     }
 
     /**
@@ -523,7 +556,8 @@ public abstract class ShapeBuilder implements ToXContent {
         POLYGON("polygon"),
         MULTIPOLYGON("multipolygon"),
         ENVELOPE("envelope"),
-        CIRCLE("circle");
+        CIRCLE("circle"),
+        GEOMETRYCOLLECTION("geometrycollection");
 
         protected final String shapename;
 
@@ -551,6 +585,7 @@ public abstract class ShapeBuilder implements ToXContent {
             GeoShapeType shapeType = null;
             Distance radius = null;
             CoordinateNode node = null;
+            List<ShapeBuilder> geometries = null;
 
             XContentParser.Token token;
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
@@ -566,6 +601,9 @@ public abstract class ShapeBuilder implements ToXContent {
                     } else if (CircleBuilder.FIELD_RADIUS.equals(fieldName)) {
                         parser.nextToken();
                         radius = Distance.parseDistance(parser.text());
+                    } else if (GeometryCollectionBuilder.FIELD_GEOMETRIES.equals(fieldName)) {
+                        parser.nextToken();
+                        geometries = parseGeometries(parser);
                     } else {
                         parser.nextToken();
                         parser.skipChildren();
@@ -575,11 +613,16 @@ public abstract class ShapeBuilder implements ToXContent {
 
             if (shapeType == null) {
                 throw new ElasticsearchParseException("Shape type not included");
-            } else if (node == null) {
+            } else if (node == null && GeoShapeType.GEOMETRYCOLLECTION != shapeType) {
                 throw new ElasticsearchParseException("Coordinates not included");
             } else if (radius != null && GeoShapeType.CIRCLE != shapeType) {
                 throw new ElasticsearchParseException("Field [" + CircleBuilder.FIELD_RADIUS + "] is supported for [" + CircleBuilder.TYPE
                         + "] only");
+            } else if (geometries != null && GeoShapeType.GEOMETRYCOLLECTION != shapeType) {
+                throw new ElasticsearchParseException("Field [" + GeometryCollectionBuilder.FIELD_GEOMETRIES
+                        + "] is supported for [" + GeometryCollectionBuilder.TYPE + "] only");
+            } else if (geometries == null && GeoShapeType.GEOMETRYCOLLECTION == shapeType) {
+                throw new ElasticsearchParseException("Geometries not included");
             }
 
             switch (shapeType) {
@@ -591,6 +634,7 @@ public abstract class ShapeBuilder implements ToXContent {
                 case MULTIPOLYGON: return parseMultiPolygon(node);
                 case CIRCLE: return parseCircle(node, radius);
                 case ENVELOPE: return parseEnvelope(node);
+                case GEOMETRYCOLLECTION: return parseGeometryCollection(geometries);
                 default:
                     throw new ElasticsearchParseException("Shape type [" + shapeType + "] not included");
             }
@@ -647,6 +691,14 @@ public abstract class ShapeBuilder implements ToXContent {
                 polygons.polygon(parsePolygon(node));
             }
             return polygons;
+        }
+
+        protected static GeometryCollectionBuilder parseGeometryCollection(List<ShapeBuilder> geometries) {
+            GeometryCollectionBuilder geometryCollection = newGeometryCollection();
+            for (ShapeBuilder geometry : geometries) {
+                geometryCollection.geometry(geometry);
+            }
+            return geometryCollection;
         }
     }
 }

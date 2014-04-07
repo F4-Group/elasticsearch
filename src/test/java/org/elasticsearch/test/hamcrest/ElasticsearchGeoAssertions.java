@@ -215,4 +215,8 @@ public class ElasticsearchGeoAssertions {
     public static void assertMultiLineString(Shape shape) {
         assert(unwrap(shape) instanceof MultiLineString): "expected MultiLineString but found " + unwrap(shape).getClass().getName();
     }
+
+    public static void assertShapeCollection(Shape shape) {
+        assert(shape instanceof ShapeCollection): "expected ShapeCollecton but found " + unwrap(shape).getClass().getName();
+    }
 }

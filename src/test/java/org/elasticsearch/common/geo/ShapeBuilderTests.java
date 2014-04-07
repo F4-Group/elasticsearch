@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchGeoAssertions.assertMultiLineString;
 import static org.elasticsearch.test.hamcrest.ElasticsearchGeoAssertions.assertMultiPolygon;
+import static org.elasticsearch.test.hamcrest.ElasticsearchGeoAssertions.assertShapeCollection;
 /**
  * Tests for {@link ShapeBuilder}
  */
@@ -67,7 +68,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
         assertEquals(exterior.getCoordinateN(2), new Coordinate(45, -30));
         assertEquals(exterior.getCoordinateN(3), new Coordinate(-45, -30));
     }
-    
+
     @Test
     public void testLineStringBuilder() {
         // Building a simple LineString
@@ -80,7 +81,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
             .point(-45.0, -15.0)
             .point(-110.0, -15.0)
             .point(-110.0, 55.0).build();
-        
+
         // Building a linestring that needs to be wrapped
         ShapeBuilder.newLineString()
         .point(100.0, 50.0)
@@ -92,7 +93,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
         .point(130.0, -30.0)
         .point(130.0, 60.0)
         .build();
-        
+
         // Building a lineString on the dateline
         ShapeBuilder.newLineString()
         .point(-180.0, 80.0)
@@ -100,7 +101,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
         .point(-180.0, -40.0)
         .point(-180.0, -80.0)
         .build();
-        
+
         // Building a lineString on the dateline
         ShapeBuilder.newLineString()
         .point(180.0, 80.0)
@@ -127,7 +128,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
             .end()
             .build();
 
-        
+
         // LineString that needs to be wrappped
         ShapeBuilder.newMultiLinestring()
             .linestring()
@@ -144,7 +145,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
                 .end()
             .build();
     }
-    
+
     @Test
     public void testPolygonSelfIntersection() {
         try {
@@ -156,7 +157,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
             .close().build();
             fail("Polygon self-intersection");
         } catch (Throwable e) {}
-        
+
     }
 
     @Test
@@ -167,7 +168,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
         ShapeBuilder.newCircleBuilder().center(0, 90).radius("100m").build();
         ShapeBuilder.newCircleBuilder().center(0, -90).radius("100m").build();
     }
-    
+
     @Test
     public void testPolygonWrapping() {
         Shape shape = ShapeBuilder.newPolygon()
@@ -176,7 +177,7 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
             .point(-250.0, -65.0)
             .point(-150.0, -65.0)
             .close().build();
-        
+
         assertMultiPolygon(shape);
     }
 
@@ -188,9 +189,35 @@ public class ShapeBuilderTests extends ElasticsearchTestCase {
             .point(-250.0, -65.0)
             .point(-150.0, -65.0)
             .build();
-        
+
         assertMultiLineString(shape);
     }
 
+    @Test
+    public void testGeometryCollection() {
+        ShapeBuilder linestring = ShapeBuilder.newLineString()
+            .point(-130.0, 55.0)
+            .point(-130.0, -40.0)
+            .point(-15.0, -40.0)
+            .point(-20.0, 50.0)
+            .point(-45.0, 50.0)
+            .point(-45.0, -15.0)
+            .point(-110.0, -15.0)
+            .point(-110.0, 55.0);
+
+        ShapeBuilder polygon = ShapeBuilder.newPolygon()
+            .point(-45, 30)
+            .point(45, 30)
+            .point(45, -30)
+            .point(-45, -30)
+            .point(-45, 30);
+
+        Shape shape = ShapeBuilder.newGeometryCollection()
+            .geometry(linestring)
+            .geometry(polygon)
+            .build();
+
+        assertShapeCollection(shape);
+    }
 
 }
