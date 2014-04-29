@@ -16,8 +16,8 @@ WORKDIR /tmp/elasticsearch
 RUN mvn clean package -DskipTests
 
 # Install Elasticsearch
-RUN tar xzf target/releases/elasticsearch-1.1.0+f4.tar.gz
-RUN mv elasticsearch-1.1.0+f4 /opt/elasticsearch
+RUN tar xzf target/releases/elasticsearch-1.1.*+f4.tar.gz
+RUN mv elasticsearch-1.1.*+f4 /opt/elasticsearch
 RUN rm -r /tmp/elasticsearch 
 
 # Expose ports.
